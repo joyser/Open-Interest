@@ -6,3 +6,6 @@ Script uses a proxy server to get around Cross Origin Request blocking policy.
 
 
 Download file and run in chrome
+
+
+chrome.exe -–allow-file-access-from-files
