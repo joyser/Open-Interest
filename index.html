@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+	<head>
+    	    <style>
+        td.red {
+          color: red;
+        }
+        
+        td.green {
+          color: green;
+        }
+        </style>
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<!-- development version, includes helpful console warnings -->
+		<script>
+    		
+$( document ).ready(function() {
+    
+    
+    pause = 2;
+    
+    // set timeout
+    var tid = setTimeout(mycode, pause*1000);
+    openInterests = [];
+    
+    let searchParams = new URLSearchParams(window.location.search)
+    let pair = searchParams.get('pair')
+    
+    var cors_api_url = 'https://cors-anywhere.herokuapp.com/';
+      function doCORSRequest(options, printResult) {
+        var x = new XMLHttpRequest();
+        x.open(options.method, cors_api_url + options.url);
+        x.onload = x.onerror = function() {
+          printResult(x.responseText);
+        };
+        if (/^POST/i.test(options.method)) {
+          x.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        }
+        x.send(options.data);
+      }
+  
+  
+    function mycode() {
+        
+        doCORSRequest({
+            method: 'GET',
+            url: "https://www.okex.com/api/futures/v3/instruments/"+pair+"/open_interest",
+            data: ""
+            }, function printResult(result) {
+                openInterests.unshift(jQuery.parseJSON(result));
+            
+                //Maximum storeage
+                openInterests = openInterests.slice(0,3600)
+                
+                //console.log(openInterests)
+                printData();
+                tid = setTimeout(mycode, pause*1000); // repeat myself
+        });
+        
+        
+        
+    
+    }
+    
+    
+    function abortTimer() { // to be called when you want to stop the timer
+        clearTimeout(tid);
+    }
+    
+    function printData(){
+        
+        tableString=""
+        
+        for (i = 0; i < 30; i++) {
+            
+            
+            
+            if(openInterests.length > i + 1){
+                
+                tableString += "<tr><td>"+openInterests[i]['timestamp']+"</td><td>"+openInterests[i]['amount']+"</td>";
+                tableString += "<td style='text-align: right'>"+(openInterests[i]['amount']-openInterests[i+1]['amount'])+"</td></tr>"
+            }    
+        }
+        
+        
+        
+        //Want to loop through recent open interest, print last 10 seconds
+        $('#recentInterest').html(tableString);
+        
+    }
+    
+    
+    //Want to print, change last 5 seconds, change in last 10 seconds
+
+});
+
+    		
+    		
+    		
+    		
+		</script>
+	</head>
+	
+	<body>
+		
+		5 Second Change:<span id="5sec"></span>
+		<br>
+		30 second Change:<span id="30sec"></span><br>
+		1 min Change:<span id="1min"></span><br>
+		5 min Change:<span id="5min"></span>
+		
+		<table border="1" id="recentInterest">
+    		
+		</table>
+	</body>
+	
+</html>
