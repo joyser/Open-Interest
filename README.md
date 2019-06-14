@@ -5,7 +5,12 @@ Simple HTML and javascript to retrieve Open interest every 2 seconds (usually ho
 Script uses a proxy server to get around Cross Origin Request blocking policy.
 
 
-Download file and run in chrome
+Setup:
 
+1) Download index.html file
 
-chrome.exe -–allow-file-access-from-files
+2) Close all windows and instances of chrome
+
+3) Open chrome using the following command in the run  (windows + r): chrome.exe -–allow-file-access-from-files
+
+4) Open index.html in chrome, and add add a pair so the URL looks like this: index.html?pair=EOS-USD-190628
