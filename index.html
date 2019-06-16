@@ -29,6 +29,7 @@ $( document ).ready(function() {
     // set timeout
     var tid = setTimeout(mycode, pause*1000);
     openInterests = [];
+    prices = []
     
     let searchParams = new URLSearchParams(window.location.search)
     let pair = searchParams.get('pair')
@@ -57,23 +58,49 @@ $( document ).ready(function() {
             data: ""
             }, function printResult(result) {
                 
-                jsonResult = jQuery.parseJSON(result);
-                jsonResult['ping'] = pingCounter;
                 
-                openInterests.unshift(jsonResult);
-                
-                
-            		//Add chart data
-            		myChart.data.datasets[0].data.push(jsonResult['amount']);
-            		myChart.data.labels.push(pingCounter);
-            		
-            		if(openInterests.length > lookBack){
+                //Now get price data of the assets:
+                doCORSRequest({
+                method: 'GET',
+                url: "https://www.okex.com/api/futures/v3/instruments/ticker",
+                data: ""
+                }, function printResult(priceResult) {
                     
-                    openInterests.pop()
-                    myChart.data.datasets[0].data.shift();
-                    myChart.data.labels.shift();
+                    jsonResult = jQuery.parseJSON(result);
+                    jsonResult['ping'] = pingCounter;
                     
-                }
+                    
+                    openInterests.unshift(jsonResult);
+                    
+                    //attempt to find the price
+                    jsonPriceResult = jQuery.parseJSON(priceResult);
+                    
+                    $.each( jsonPriceResult, function(key, value ){
+                        
+                        if(pair == value['instrument_id']){
+
+                            myChart.data.datasets[1].data.push(value['last']);
+
+                        }
+                        
+                    } ); 
+                    
+                    
+                		//Add chart data
+                		myChart.data.datasets[0].data.push(jsonResult['amount']);
+                		myChart.data.labels.push(pingCounter);
+                		
+                		if(openInterests.length > lookBack){
+                        
+                        openInterests.pop()
+                        myChart.data.datasets[0].data.shift();
+                        myChart.data.datasets[1].data.shift();
+                        myChart.data.labels.shift();
+                        
+                    }
+                    
+                });
+                    
                 
                                 
                 //console.log(openInterests)
@@ -120,16 +147,33 @@ $( document ).ready(function() {
             datasets: [{
                 data: [],
                 label: pair,
+                yAxisID:'a',
                 lineTension: 0,
                 borderColor: 'rgba(0,102,204,1)',
                 backgroundColor: 'rgba(255,204,153,0.2)'
+            },{
+                data: [],
+                label: 'Price',
+                yAxisID:'b',
+                lineTension: 0,
+                borderColor: 'rgba(51,204,51,1)',
+                backgroundColor: 'rgba(0,255,255,0.2)'
             }]
         },
         options: {
             scales: {
                 yAxes: [{
+                    id:'a',
                     ticks: {
+                      fontColor: 'rgba(0,102,204,1)', // this here
                     }
+                },{
+                    id:'b',
+                    ticks: {
+                      fontColor: 'rgba(51,204,51,1)', // this here
+                    },
+                    position:'right'
+                    
                 }]
             },
             title: {
