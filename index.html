@@ -13,12 +13,18 @@
 
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 		<!-- development version, includes helpful console warnings -->
-		<script>
+    		<script src="Chart.js"></script>
+        <script>
+            
     		
 $( document ).ready(function() {
     
     
     pause = 2;
+    pingCounter = 0;
+    lookBack = 60
+    
+    
     
     // set timeout
     var tid = setTimeout(mycode, pause*1000);
@@ -43,24 +49,38 @@ $( document ).ready(function() {
   
     function mycode() {
         
+        pingCounter++;
+        
         doCORSRequest({
             method: 'GET',
             url: "https://www.okex.com/api/futures/v3/instruments/"+pair+"/open_interest",
             data: ""
             }, function printResult(result) {
-                openInterests.unshift(jQuery.parseJSON(result));
-            
-                //Maximum storeage
-                openInterests = openInterests.slice(0,3600)
                 
+                jsonResult = jQuery.parseJSON(result);
+                jsonResult['ping'] = pingCounter;
+                
+                openInterests.unshift(jsonResult);
+                
+                
+            		//Add chart data
+            		myChart.data.datasets[0].data.push(jsonResult['amount']);
+            		myChart.data.labels.push(pingCounter);
+            		
+            		if(openInterests.length > lookBack){
+                    
+                    openInterests.pop()
+                    myChart.data.datasets[0].data.shift();
+                    myChart.data.labels.shift();
+                    
+                }
+                
+                                
                 //console.log(openInterests)
                 printData();
                 tid = setTimeout(mycode, pause*1000); // repeat myself
         });
         
-        
-        
-    
     }
     
     
@@ -74,24 +94,51 @@ $( document ).ready(function() {
         
         for (i = 0; i < 30; i++) {
             
-            
-            
             if(openInterests.length > i + 1){
                 
                 tableString += "<tr><td>"+openInterests[i]['timestamp']+"</td><td>"+openInterests[i]['amount']+"</td>";
+                tableString += "<td style='text-align: right'>"+openInterests[i]['ping']+"</td>"
                 tableString += "<td style='text-align: right'>"+(openInterests[i]['amount']-openInterests[i+1]['amount'])+"</td></tr>"
             }    
         }
         
-        
-        
         //Want to loop through recent open interest, print last 10 seconds
         $('#recentInterest').html(tableString);
         
+        //Update chart 
+        myChart.update();
+        
     }
     
+    //Chart stuff
+    var ctx = $('#myChart');
     
-    //Want to print, change last 5 seconds, change in last 10 seconds
+    var myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [], //x-axis
+            datasets: [{
+                data: [],
+                label: pair,
+                lineTension: 0,
+                borderColor: 'rgba(0,102,204,1)',
+                backgroundColor: 'rgba(255,204,153,0.2)'
+            }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                    }
+                }]
+            },
+            title: {
+                display: true,
+                text: 'Open Interest'
+            }
+        }
+    });
+    
 
 });
 
@@ -103,16 +150,10 @@ $( document ).ready(function() {
 	</head>
 	
 	<body>
+		<canvas id="myChart" width="400" height="100"></canvas>
 		
-		5 Second Change:<span id="5sec"></span>
-		<br>
-		30 second Change:<span id="30sec"></span><br>
-		1 min Change:<span id="1min"></span><br>
-		5 min Change:<span id="5min"></span>
+		<table id="recentInterest" border="1"></table>
 		
-		<table border="1" id="recentInterest">
-    		
-		</table>
 	</body>
 	
 </html>
