@@ -22,7 +22,7 @@ $( document ).ready(function() {
     
     pause = 2;
     pingCounter = 0;
-    lookBack = 60
+    lookBack = 30
     
     
     
@@ -119,7 +119,7 @@ $( document ).ready(function() {
         
         tableString=""
         
-        for (i = 0; i < 30; i++) {
+        for (i = 0; i < openInterests.length-1; i++) {
             
             if(openInterests.length > i + 1){
                 
@@ -166,14 +166,13 @@ $( document ).ready(function() {
                     id:'a',
                     ticks: {
                       fontColor: 'rgba(0,102,204,1)', // this here
-                    }
+                    },
+                    position:'right'
                 },{
                     id:'b',
                     ticks: {
                       fontColor: 'rgba(51,204,51,1)', // this here
-                    },
-                    position:'right'
-                    
+                    }
                 }]
             },
             title: {
