@@ -13,4 +13,6 @@ Setup:
 
 3) Open chrome using the following command in the run  (windows + r): chrome.exe -–allow-file-access-from-files
 
-4) Open index.html in chrome, and add add a pair so the URL looks like this: index.html?pair=EOS-USD-190628
+4) Open index.html in chrome, and add add a pair AND lookback so the URL looks like this: index.html?pair=EOS-USD-190628&lookback=30
+
+lookback is the number of data points to display before it starts cutting the old ones
