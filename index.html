@@ -33,6 +33,7 @@ $( document ).ready(function() {
     
     let searchParams = new URLSearchParams(window.location.search)
     let pair = searchParams.get('pair')
+    let lookBack = searchParams.get('lookBack')
     
     var cors_api_url = 'https://cors-anywhere.herokuapp.com/';
       function doCORSRequest(options, printResult) {
