@@ -13,26 +13,26 @@
 
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 		<!-- development version, includes helpful console warnings -->
-    		<script src="Chart.js"></script>
-        <script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>        
+<script>
             
     		
 $( document ).ready(function() {
     
+    let searchParams = new URLSearchParams(window.location.search)
+    let pair = searchParams.get('pair')
+    let lookBack = searchParams.get('lookBack')
     
     pause = 2;
     pingCounter = 0;
     
     
     
-    // set timeout
-    var tid = setTimeout(mycode, pause*1000);
-    openInterests = [];
-    prices = []
     
-    let searchParams = new URLSearchParams(window.location.search)
-    let pair = searchParams.get('pair')
-    let lookBack = searchParams.get('lookBack')
+    
+    
+    
     
     var cors_api_url = 'https://cors-anywhere.herokuapp.com/';
       function doCORSRequest(options, printResult) {
@@ -74,23 +74,25 @@ $( document ).ready(function() {
                     
                     //attempt to find the price
                     jsonPriceResult = jQuery.parseJSON(priceResult);
+                    dateTime = new Date(jsonResult['timestamp'])
                     
                     $.each( jsonPriceResult, function(key, value ){
                         
                         if(pair == value['instrument_id']){
 
-                            myChart.data.datasets[1].data.push(value['last']);
+                            myChart.data.datasets[1].data.push({t: dateTime, y: value['last']});
 
                         }
                         
                     } ); 
                     
+                        
                     
-                		//Add chart data
-                		myChart.data.datasets[0].data.push(jsonResult['amount']);
-                		myChart.data.labels.push(pingCounter);
+                    //Add chart data
+                    myChart.data.datasets[0].data.push({t: dateTime, y: jsonResult['amount']});
+                    myChart.data.labels.push(dateTime.toLocaleString());
                 		
-                		if(openInterests.length > lookBack){
+                    if(openInterests.length > lookBack){
                         
                         openInterests.pop()
                         myChart.data.datasets[0].data.shift();
@@ -98,6 +100,10 @@ $( document ).ready(function() {
                         myChart.data.labels.shift();
                         
                     }
+                    
+                    //Update max and min properties
+                    myChart.options.scales.xAxes[0].time.min = myChart.data.datasets[0].data[0]['t'];
+                    myChart.options.scales.xAxes[0].time.max = myChart.data.datasets[0].data[myChart.data.datasets[0].data.length-1]['t'];
                     
                 });
                     
@@ -137,50 +143,74 @@ $( document ).ready(function() {
         
     }
     
-    //Chart stuff
-    var ctx = $('#myChart');
-    
-    var myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [], //x-axis
-            datasets: [{
-                data: [],
-                label: pair,
-                yAxisID:'a',
-                lineTension: 0,
-                borderColor: 'rgba(0,102,204,1)',
-                backgroundColor: 'rgba(255,204,153,0.2)'
-            },{
-                data: [],
-                label: 'Price',
-                yAxisID:'b',
-                lineTension: 0,
-                borderColor: 'rgba(51,204,51,1)',
-                backgroundColor: 'rgba(0,255,255,0.2)'
-            }]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    id:'a',
-                    ticks: {
-                      fontColor: 'rgba(0,102,204,1)', // this here
-                    },
-                    position:'right'
+    // set timeout
+    if(lookBack && pair){
+        var tid = setTimeout(mycode, pause*1000);
+        
+        openInterests = []
+        prices = []
+        
+        //Chart stuff
+        var ctx = $('#myChart');
+        
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [], //x-axis
+                datasets: [{
+                    data: [],
+                    label: pair,
+                    yAxisID:'a',
+                    lineTension: 0,
+                    borderColor: 'rgba(0,102,204,1)',
+                    backgroundColor: 'rgba(255,204,153,0.2)'
                 },{
-                    id:'b',
-                    ticks: {
-                      fontColor: 'rgba(51,204,51,1)', // this here
-                    }
+                    data: [],
+                    label: 'Price',
+                    yAxisID:'b',
+                    lineTension: 0,
+                    borderColor: 'rgba(51,204,51,1)',
+                    backgroundColor: 'rgba(0,255,255,0.2)'
                 }]
             },
-            title: {
-                display: true,
-                text: 'Open Interest'
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+                            min: 1471174953000,
+                            max: 1473853353000
+                        }
+                        
+                    }],
+                    yAxes: [{
+                        id:'a',
+                        ticks: {
+                          fontColor: 'rgba(0,102,204,1)', // this here
+                        },
+                        position:'right'
+                    },{
+                        id:'b',
+                        ticks: {
+                          fontColor: 'rgba(51,204,51,1)', // this here
+                        }
+                    }]
+                },
+                title: {
+                    display: true,
+                    text: 'Open Interest'
+                }
             }
-        }
-    });
+        });
+        
+    }else{
+        
+        $('#message').html("Enter pair and lookback below");
+    }
+    
+    
+    
+    
     
 
 });
@@ -193,10 +223,17 @@ $( document ).ready(function() {
 	</head>
 	
 	<body>
+    	<span id="message"></span>
 		<canvas id="myChart" width="400" height="200"></canvas>
 		
 		<table id="recentInterest" border="1"></table>
 		
+		<form action="index.html" method="GET">
+    		<br>
+    		Pair: <input name="pair" type="text"/><br>
+    		Lookback: <input name="lookBack" type="text"/><br>
+    		<input type="submit" name="submit"/>
+		</form>
 	</body>
 	
 </html>
